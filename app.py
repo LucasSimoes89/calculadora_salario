@@ -1,13 +1,18 @@
+import os
 from flask import Flask, render_template, request
 import psycopg2
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
 
 app = Flask(__name__)
 
-# Configuração da conexão com o banco de dados
+# Configuração da conexão com o banco de dados puxando do .env
 DB_CONFIG = {
     'dbname': 'calculadora_tributos',
-    'user': 'postgres', # Substitua pelo seu usuário
-    'password': '123',  # Substitua pela sua senha
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
     'host': 'localhost',
     'port': '5432'
 }
