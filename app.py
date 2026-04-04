@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request
 import psycopg2
+import psycopg2.extras
 from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -61,9 +62,13 @@ def calcular_tributos(salario_bruto, dependentes):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     resultado = None
+    conn = get_db_connection()
     
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
     if request.method == 'POST':
         # Recebe os dados do Front-end
+        cargo_id = int(request.form['cargo']) # Recebe o cargo selecionado
         salario_bruto = float(request.form['salario_bruto'])
         dependentes = int(request.form['dependentes'])
         
@@ -71,15 +76,11 @@ def index():
         inss, irrf, salario_liquido = calcular_tributos(salario_bruto, dependentes)
         
         # Salva no Banco de Dados (Create do CRUD)
-        conn = get_db_connection()
-        cur = conn.cursor()
         cur.execute('''
-            INSERT INTO calculos (salario_bruto, dependentes, inss, irrf, salario_liquido)
-            VALUES (%s, %s, %s, %s, %s)
-        ''', (salario_bruto, dependentes, inss, irrf, salario_liquido))
+            INSERT INTO calculos (cargo_id, salario_bruto, dependentes, inss, irrf, salario_liquido)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (cargo_id, salario_bruto, dependentes, inss, irrf, salario_liquido))
         conn.commit()
-        cur.close()
-        conn.close()
         
         # Prepara o dicionário para exibir no HTML
         resultado = {
@@ -90,7 +91,26 @@ def index():
             'liquido': salario_liquido
         }
         
-    return render_template('index.html', resultado=resultado)
+    # --- LEITURA DE DADOS (READ) ---
+    
+    # 1. Busca os cargos para montar as opções no Front-end
+    cur.execute("SELECT id, nome_cargo FROM cargos ORDER BY nome_cargo")
+    lista_cargos = cur.fetchall()
+    
+    # 2. Busca o histórico de cálculos unindo as tabelas (JOIN)
+    cur.execute('''
+        SELECT c.id, cg.nome_cargo, c.salario_bruto, c.salario_liquido, c.data_calculo 
+        FROM calculos c
+        JOIN cargos cg ON c.cargo_id = cg.id
+        ORDER BY c.data_calculo DESC
+        LIMIT 10
+    ''')
+    historico_calculos = cur.fetchall()
+
+    cur.close()
+    conn.close()
+        
+    return render_template('index.html', resultado=resultado, cargos=lista_cargos, historico=historico_calculos)
 
 if __name__ == '__main__':
     app.run(debug=True)
