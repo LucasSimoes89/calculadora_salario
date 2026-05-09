@@ -6,26 +6,54 @@
     <title>Calculadora de Salário</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        
+        /* Card Simples Minimalista */
+        .dashboard { margin-bottom: 30px; }
+        .card { padding: 15px; border-radius: 8px; text-align: center; color: white; background-color: #343a40; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 200px; margin: 0 auto; }
+        .card h3 { margin: 0; font-size: 1em; opacity: 0.9; }
+        .card p { margin: 5px 0 0; font-size: 1.5em; font-weight: bold; }
+
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         input, select { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background-color: #218838; }
+        button[type="submit"] { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        
         .recibo { margin-top: 30px; padding: 20px; background-color: #e9ecef; border-radius: 5px; border: 1px solid #ced4da; }
         .valor-liquido { font-size: 1.2em; font-weight: bold; color: #28a745; }
         
-        /* Estilos da nova tabela de histórico */
-        table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #007bff; color: white; }
         tr:hover { background-color: #f1f1f1; }
+        
+        /* Estilos dos Botões de Ação na Tabela */
+        .acoes-container { display: flex; gap: 8px; }
+        .btn-excluir { background-color: #dc3545; padding: 6px 10px; font-size: 0.85em; border-radius: 4px; color: white; border: none; cursor: pointer; }
+        .btn-excluir:hover { background-color: #c82333; }
+        .btn-exportar { background-color: #17a2b8; padding: 6px 10px; font-size: 0.85em; border-radius: 4px; color: white; text-decoration: none; display: inline-block; }
+        .btn-exportar:hover { background-color: #138496; }
+        form.form-inline { margin: 0; }
+
+        /* Estilos da Paginação */
+        .paginacao { margin-top: 20px; text-align: center; }
+        .paginacao a { padding: 8px 12px; background-color: #e9ecef; border: 1px solid #ced4da; text-decoration: none; color: #333; border-radius: 4px; margin: 0 5px; }
+        .paginacao a:hover { background-color: #d3d9df; }
+        .paginacao span { font-weight: bold; padding: 8px 12px; }
     </style>
 </head>
 <body>
 
+    <!-- Contador de Simulações -->
+    <div class="dashboard">
+        <div class="card">
+            <h3>Total de Simulações</h3>
+            <p>{{ totais }}</p>
+        </div>
+    </div>
+
     <h2>Calculadora de Salário e Impostos</h2>
     
-    <form method="POST">
+    <form method="POST" action="{{ url_for('index') }}">
         <div class="form-group">
             <label for="cargo">Cargo:</label>
             <select name="cargo" id="cargo" required>
@@ -61,7 +89,7 @@
     </div>
     {% endif %}
 
-    <h3>Histórico Recente de Simulações</h3>
+    <h3>Histórico de Simulações</h3>
     <table>
         <thead>
             <tr>
@@ -69,6 +97,7 @@
                 <th>Cargo</th>
                 <th>Salário Bruto</th>
                 <th>Salário Líquido</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -78,14 +107,37 @@
                 <td>{{ item['nome_cargo'] }}</td>
                 <td>R$ {{ "%.2f"|format(item['salario_bruto']) }}</td>
                 <td style="color: green; font-weight: bold;">R$ {{ "%.2f"|format(item['salario_liquido']) }}</td>
+                <td class="acoes-container">
+                    <!-- NOVO: Botão de Exportar -->
+                    <a href="{{ url_for('exportar_csv', id=item['id']) }}" class="btn-exportar">CSV</a>
+                    
+                    <form class="form-inline" action="{{ url_for('deletar', id=item['id']) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este cálculo?');">
+                        <button type="submit" class="btn-excluir">Excluir</button>
+                    </form>
+                </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="4" style="text-align: center;">Nenhum cálculo registrado ainda.</td>
+                <td colspan="5" style="text-align: center;">Nenhum cálculo registrado ainda.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- NOVO: Controles de Paginação -->
+    {% if total_paginas > 1 %}
+    <div class="paginacao">
+        {% if pagina_atual > 1 %}
+            <a href="{{ url_for('index', pagina=pagina_atual-1) }}">&laquo; Anterior</a>
+        {% endif %}
+        
+        <span>Página {{ pagina_atual }} de {{ total_paginas }}</span>
+        
+        {% if pagina_atual < total_paginas %}
+            <a href="{{ url_for('index', pagina=pagina_atual+1) }}">Próxima &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
 
 </body>
 </html>
