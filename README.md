@@ -13,5 +13,5 @@ O projeto foi estruturado para ser entregue em 4 fases incrementais (CRUD comple
 
 - [x] **Etapa 1:** Estrutura base (MVP), regras de negócio matemáticas (INSS/IRRF) e gravação no banco de dados (Create). Implementação de variáveis de ambiente para segurança (`.env`).
 - [x] **Etapa 2:** Relacionamento de tabelas (Cargos), consultas SQL com `JOIN` e listagem do histórico na interface (Read).
-- [ ] **Etapa 3:** Consultas de agregação (`SUM`/`COUNT`) para um Dashboard de totais e funcionalidade de exclusão de registros (Delete).
-- [ ] **Etapa 4:** Filtros de busca personalizados e atualização de registros existentes (Update), fechando o ciclo do CRUD.
+- [x] **Etapa 3:** Funcionalidade de exclusão de registros (Delete), inclusão de paginação de registros e funcionalidade de exportação do cálculo em CSV..
+- [ ] **Etapa 4:** Atualização de registros existentes (Update), fechando o ciclo do CRUD, inserção de novos parâmetros de cálculo, ajuste da lógica de exclusão de registros.
